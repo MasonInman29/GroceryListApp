@@ -1,0 +1,15 @@
+[
+    { "id": "1", "name": "Milk", "category": "Fridge", "price": 1.99, "count": 2 },
+    { "id": "2", "name": "Bread", "category": "Other", "price": 2.49, "count": 1 },
+    { "id": "3", "name": "Eggs", "category": "Fridge", "price": 3.29, "count": 1 },
+    { "id": "4", "name": "Apple", "category": "Fruit", "price": 0.89, "count": 4 },
+    { "id": "5", "name": "Cheese", "category": "Fridge", "price": 2.99, "count": 1 },
+    { "id": "6", "name": "Banana", "category": "Fruit", "price": 0.69, "count": 1 },
+    { "id": "7", "name": "Frozen Broccoli", "category": "Freezer", "price": 0.99, "count": 9 },
+    { "id": "8", "name": "Chicken", "category": "Meat", "price": 2.69, "count": 1 },
+    { "id": "9", "name": "Mushrooms", "category": "Veggies", "price": 2.59, "count": 1 },
+    { "id": "11", "name": "Canned Black Beans", "category": "other", "price": 2.59, "count": 1 },
+
+    { "id": "10", "name": "Sunny D", "category": "Fridge", "price": 2.97, "count": 1 }
+  ]
+  
