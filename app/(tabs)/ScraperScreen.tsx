@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, Button, FlatList, StyleSheet } from 'react-native';
+import { View, Text, TextInput, Button, FlatList, StyleSheet, Image } from 'react-native';
 
 interface Item {
   name: string;
   price: number;
+  imgUrl: string,
 }
 
 const ScraperScreen: React.FC = () => {
@@ -18,8 +19,15 @@ const ScraperScreen: React.FC = () => {
     try {
       const response = await fetch(`http://127.0.0.1:5000/scrape?query=${searchQuery}`);
       const data = await response.json();
+  
       if (response.ok) {
-        setItems(data);
+        // Assuming 'search' is the key that holds the list of products in the JSON
+        const parsedItems = data.search.map((item: any) => ({
+          name: item.name,
+          price: item.price, // or item.price, depending on which field holds the correct price
+          imgUrl: item.image, // if you want to display the image as well
+        }));
+        setItems(parsedItems);
       } else {
         setError(data.message || 'Failed to fetch items');
       }
@@ -41,15 +49,20 @@ const ScraperScreen: React.FC = () => {
       <Button title="Search" onPress={fetchItems} disabled={loading} />
       {loading && <Text>Loading...</Text>}
       {error && <Text style={styles.error}>{error}</Text>}
+      <Text>Items returned: {items.length}</Text>
       <FlatList
         data={items}
         keyExtractor={(item, index) => index.toString()}
         renderItem={({ item }) => (
           <View style={styles.item}>
-            <Text style={styles.name}>{item.name}</Text>
-            <Text style={styles.price}>${item.price}</Text>
+            <Image source={{ uri: item.imgUrl }} style={styles.image} />
+            <View style={styles.itemDetails}>
+              <Text style={styles.name}>{item.name}</Text>
+              <Text style={styles.price}>${item.price}</Text>
+            </View>
           </View>
         )}
+        ListEmptyComponent={<Text>No items found.</Text>} // Add this to handle empty lists
       />
     </View>
   );
@@ -69,9 +82,19 @@ const styles = StyleSheet.create({
     paddingLeft: 8,
   },
   item: {
+    flexDirection: 'row',
     padding: 10,
     borderBottomWidth: 1,
     borderBottomColor: '#ddd',
+    alignItems: 'center',
+  },
+  image: {
+    width: 60,
+    height: 60,
+    marginRight: 10,
+  },
+  itemDetails: {
+    flex: 1,
   },
   name: {
     fontSize: 18,
