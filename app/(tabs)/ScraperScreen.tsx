@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, Button, FlatList, StyleSheet, Image } from 'react-native';
+import { useNavigation } from 'expo-router';
+import { useCart } from '../context/CartContext';
 
 interface Item {
   name: string;
   price: number;
-  imgUrl: string,
+  imgUrl: string;
 }
 
 const ScraperScreen: React.FC = () => {
@@ -12,6 +14,9 @@ const ScraperScreen: React.FC = () => {
   const [items, setItems] = useState<Item[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>('');
+  
+  const navigation = useNavigation();
+  const { addToCart } = useCart();
 
   const fetchItems = async () => {
     setLoading(true);
@@ -21,11 +26,10 @@ const ScraperScreen: React.FC = () => {
       const data = await response.json();
   
       if (response.ok) {
-        // Assuming 'search' is the key that holds the list of products in the JSON
         const parsedItems = data.search.map((item: any) => ({
           name: item.name,
-          price: item.price, // or item.price, depending on which field holds the correct price
-          imgUrl: item.image, // if you want to display the image as well
+          price: item.price,
+          imgUrl: item.image,
         }));
         setItems(parsedItems);
       } else {
@@ -38,6 +42,10 @@ const ScraperScreen: React.FC = () => {
     setLoading(false);
   };
 
+  const goToCart = () => {
+    navigation.navigate('Cart');
+  };
+
   return (
     <View style={styles.container}>
       <TextInput
@@ -47,6 +55,7 @@ const ScraperScreen: React.FC = () => {
         onChangeText={setSearchQuery}
       />
       <Button title="Search" onPress={fetchItems} disabled={loading} />
+      <Button title="Go to Cart" onPress={goToCart} />
       {loading && <Text>Loading...</Text>}
       {error && <Text style={styles.error}>{error}</Text>}
       <Text>Items returned: {items.length}</Text>
@@ -59,14 +68,16 @@ const ScraperScreen: React.FC = () => {
             <View style={styles.itemDetails}>
               <Text style={styles.name}>{item.name}</Text>
               <Text style={styles.price}>${item.price}</Text>
+              <Button title="Add to cart" onPress={() => addToCart(item)} />
             </View>
           </View>
         )}
-        ListEmptyComponent={<Text>No items found.</Text>} // Add this to handle empty lists
+        ListEmptyComponent={<Text>No items found.</Text>}
       />
     </View>
   );
 };
+
 
 const styles = StyleSheet.create({
   container: {
@@ -106,6 +117,24 @@ const styles = StyleSheet.create({
   error: {
     color: 'red',
     marginVertical: 10,
+  },
+  cart: {
+    marginTop: 20,
+    borderTopWidth: 1,
+    borderTopColor: '#ddd',
+    paddingTop: 10,
+  },
+  cartTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+  },
+  cartItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingVertical: 5,
+  },
+  cartItemText: {
+    fontSize: 16,
   },
 });
 
