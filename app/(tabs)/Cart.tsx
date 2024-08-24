@@ -1,33 +1,33 @@
-// app/(tabs)/HomeScreen.tsx
+// app/(tabs)/Cart.tsx
 import React from 'react';
 import { Image, StyleSheet, FlatList, Button, Alert, View } from 'react-native';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { useCart } from '../context/CartContext';
 
-export default function HomeScreen() {
-  const { cartItems, removeFromCart, clearCart } = useCart();
+export default function Cart() {
+  const { cartItems, removeFromCart, updateCartItem, clearCart } = useCart();
 
   const confirmRemoveItem = (index: number) => {
-    Alert.alert('Remove Item', 'Are you sure you want to remove this item?', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Remove',
-        style: 'destructive',
-        onPress: () => removeFromCart(index),
-      },
-    ]);
+    removeFromCart(index);
   };
 
   const confirmClearCart = () => {
-    Alert.alert('Clear Cart', 'Are you sure you want to clear the cart?', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Clear',
-        style: 'destructive',
-        onPress: clearCart,
-      },
-    ]);
+    clearCart();
+  };
+
+  const incrementQuantity = (index: number) => {
+    const newQuantity = cartItems[index].quantity + 1;
+    updateCartItem(index, newQuantity);
+  };
+
+  const decrementQuantity = (index: number) => {
+    const newQuantity = cartItems[index].quantity - 1;
+    updateCartItem(index, newQuantity);
+  };
+
+  const setQuantity = (index: number, newQuantity: number) => {
+      updateCartItem(index, newQuantity);
   };
 
   return (
@@ -39,9 +39,15 @@ export default function HomeScreen() {
         renderItem={({ item, index }) => (
           <View style={styles.cartItem}>
             <Image source={{ uri: item.imgUrl }} style={styles.cartItemImage} />
-            <ThemedText style={styles.cartItemText}>
-              {item.name} - ${item.price}
-            </ThemedText>
+            <View style={styles.cartItemDetails}>
+              <ThemedText style={styles.cartItemText}>
+                {item.name} - ${item.price} x {item.quantity}
+              </ThemedText>
+              <View style={styles.quantityControls}>
+                <Button title="-" onPress={() => decrementQuantity(index)} />
+                <Button title="+" onPress={() => incrementQuantity(index)} />
+              </View>
+            </View>
             <Button title="Remove" onPress={() => confirmRemoveItem(index)} />
           </View>
         )}
@@ -71,8 +77,15 @@ const styles = StyleSheet.create({
     height: 60,
     marginRight: 10,
   },
-  cartItemText: {
+  cartItemDetails: {
     flex: 1,
+  },
+  cartItemText: {
     fontSize: 16,
+  },
+  quantityControls: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
   },
 });

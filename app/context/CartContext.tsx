@@ -5,12 +5,15 @@ interface Item {
   name: string;
   price: number;
   imgUrl: string;
+  type: string;
+  quantity: number;
 }
 
 interface CartContextType {
   cartItems: Item[];
   addToCart: (item: Item) => void;
   removeFromCart: (index: number) => void;
+  updateCartItem: (index: number, quantity: number) => void;
   clearCart: () => void;
 }
 
@@ -20,7 +23,17 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [cartItems, setCartItems] = useState<Item[]>([]);
 
   const addToCart = (item: Item) => {
-    setCartItems([...cartItems, item]);
+    const existingItemIndex = cartItems.findIndex(cartItem => cartItem.name === item.name);
+
+    if (existingItemIndex >= 0) {
+      // If item already exists, update the quantity
+      const updatedCart = [...cartItems];
+      updatedCart[existingItemIndex].quantity += item.quantity;
+      setCartItems(updatedCart);
+    } else {
+      // Otherwise, add the new item to the cart
+      setCartItems([...cartItems, { ...item, quantity: 1 }]);
+    }
   };
 
   const removeFromCart = (index: number) => {
@@ -29,12 +42,23 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setCartItems(updatedCart);
   };
 
+  const updateCartItem = (index: number, quantity: number) => {
+    const updatedCart = [...cartItems];
+    if (quantity > 0) {
+      updatedCart[index].quantity = quantity;
+      setCartItems(updatedCart);
+    } else {
+      // Remove item if quantity is set to 0
+      removeFromCart(index);
+    }
+  };
+
   const clearCart = () => {
     setCartItems([]);
   };
 
   return (
-    <CartContext.Provider value={{ cartItems, addToCart, removeFromCart, clearCart }}>
+    <CartContext.Provider value={{ cartItems, addToCart, removeFromCart, updateCartItem, clearCart }}>
       {children}
     </CartContext.Provider>
   );
