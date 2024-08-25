@@ -1,12 +1,12 @@
-// app/(tabs)/Cart.tsx
-import React from 'react';
-import { Image, StyleSheet, FlatList, Button, Alert, View } from 'react-native';
+import React, { useState } from 'react';
+import { Image, StyleSheet, FlatList, Button, Alert, View, TextInput } from 'react-native';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { useCart } from '../context/CartContext';
 
 export default function Cart() {
-  const { cartItems, removeFromCart, updateCartItem, clearCart } = useCart();
+  const { cartItems, removeFromCart, updateCartItem, clearCart, saveCart } = useCart();
+  const [cartName, setCartName] = useState('');
 
   const confirmRemoveItem = (index: number) => {
     removeFromCart(index);
@@ -26,8 +26,12 @@ export default function Cart() {
     updateCartItem(index, newQuantity);
   };
 
-  const setQuantity = (index: number, newQuantity: number) => {
-      updateCartItem(index, newQuantity);
+  const handleSaveCart = () => {
+    if (!cartName) {
+      Alert.alert('Error', 'Please enter a name for your cart.');
+      return;
+    }
+    saveCart(cartName);
   };
 
   return (
@@ -54,7 +58,16 @@ export default function Cart() {
         ListEmptyComponent={<ThemedText>Your cart is empty.</ThemedText>}
       />
       {cartItems.length > 0 && (
-        <Button title="Clear Cart" onPress={confirmClearCart} />
+        <View>
+          <TextInput
+            style={styles.cartNameInput}
+            placeholder="Enter cart name"
+            value={cartName}
+            onChangeText={setCartName}
+          />
+          <Button title="Save Cart" onPress={handleSaveCart} />
+          <Button title="Clear Cart" onPress={confirmClearCart} />
+        </View>
       )}
     </ThemedView>
   );
@@ -87,5 +100,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
+  },
+  cartNameInput: {
+    borderWidth: 1,
+    borderColor: '#ccc',
+    padding: 8,
+    marginVertical: 10,
+    borderRadius: 4,
   },
 });

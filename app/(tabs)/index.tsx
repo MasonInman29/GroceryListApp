@@ -1,55 +1,92 @@
-// app/(tabs)/HomeScreen.tsx
-import React from 'react';
-import { Image, StyleSheet, FlatList, Button, Alert, View } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { Image, StyleSheet, FlatList, Button, View, Platform } from 'react-native';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { useCart } from '../context/CartContext';
+import * as FileSystem from 'expo-file-system';
+
+const FILEDIRECTORY = FileSystem.documentDirectory || ''; // Use the document directory for native platforms
+const FILENAME = 'savedCartsData.json';
+const fileUri = FILEDIRECTORY + FILENAME;
 
 export default function HomeScreen() {
-  const { cartItems, removeFromCart, clearCart } = useCart();
+  const [savedCarts, setSavedCarts] = useState<any[]>([]);
+  const { removeFromCart, clearCart } = useCart();
 
-  const confirmRemoveItem = (index: number) => {
-    Alert.alert('Remove Item', 'Are you sure you want to remove this item?', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Remove',
-        style: 'destructive',
-        onPress: () => removeFromCart(index),
-      },
-    ]);
-  };
+  useEffect(() => {
+    const loadSavedCarts = async () => {
+      try {
+        if (Platform.OS === 'web') {
+          const existingDataStr = localStorage.getItem(FILENAME);
+          const existingData = existingDataStr ? JSON.parse(existingDataStr) : [];
+          setSavedCarts(existingData);
+        } else {
+          const fileInfo = await FileSystem.getInfoAsync(fileUri);
+          if (fileInfo.exists) {
+            const fileContents = await FileSystem.readAsStringAsync(fileUri);
+            setSavedCarts(JSON.parse(fileContents));
+          } else {
+            console.log("No saved carts found.");
+          }
+        }
+      } catch (error) {
+        console.error("Failed to load saved carts:", error);
+      }
+    };
 
-  const confirmClearCart = () => {
-    Alert.alert('Clear Cart', 'Are you sure you want to clear the cart?', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Clear',
-        style: 'destructive',
-        onPress: clearCart,
-      },
-    ]);
+    loadSavedCarts();
+  }, []);
+
+  const confirmRemoveCart = (index: number) => {
+    const updatedCarts = [...savedCarts];
+    updatedCarts.splice(index, 1);
+    setSavedCarts(updatedCarts);
+
+    const saveUpdatedCarts = async () => {
+      try {
+        if (Platform.OS === 'web') {
+          localStorage.setItem(FILENAME, JSON.stringify(updatedCarts, null, 2));
+          console.log("Cart removed successfully on web.");
+        } else {
+          await FileSystem.writeAsStringAsync(fileUri, JSON.stringify(updatedCarts, null, 2));
+          console.log("Cart removed successfully on native platform.");
+        }
+      } catch (error) {
+        console.error("Failed to remove cart:", error);
+      }
+    };
+
+    saveUpdatedCarts();
   };
 
   return (
     <ThemedView style={styles.container}>
-      <ThemedText type="title">Cart</ThemedText>
+      <ThemedText type="title">Saved Carts</ThemedText>
       <FlatList
-        data={cartItems}
+        data={savedCarts}
         keyExtractor={(item, index) => index.toString()}
         renderItem={({ item, index }) => (
           <View style={styles.cartItem}>
-            <Image source={{ uri: item.imgUrl }} style={styles.cartItemImage} />
             <ThemedText style={styles.cartItemText}>
-              {item.name} - ${item.price}
+              {item.name}
             </ThemedText>
-            <Button title="Remove" onPress={() => confirmRemoveItem(index)} />
+            <FlatList
+              data={item.items}
+              keyExtractor={(item, index) => index.toString()}
+              renderItem={({ item }) => (
+                <View style={styles.cartItemDetail}>
+                  <Image source={{ uri: item.imgUrl }} style={styles.cartItemImage} />
+                  <ThemedText style={styles.cartItemText}>
+                    {item.name} - ${item.price} x {item.quantity}
+                  </ThemedText>
+                </View>
+              )}
+            />
+            <Button title="Remove Cart" onPress={() => confirmRemoveCart(index)} />
           </View>
         )}
-        ListEmptyComponent={<ThemedText>Your cart is empty.</ThemedText>}
+        ListEmptyComponent={<ThemedText>No saved carts available.</ThemedText>}
       />
-      {cartItems.length > 0 && (
-        <Button title="Clear Cart" onPress={confirmClearCart} />
-      )}
     </ThemedView>
   );
 }
@@ -59,12 +96,17 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   cartItem: {
+    flexDirection: 'column',
+    alignItems: 'flex-start',
+    padding: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#ddd',
+  },
+  cartItemDetail: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     padding: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#ddd',
   },
   cartItemImage: {
     width: 60,
